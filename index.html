@@ -1,0 +1,593 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Proof Kit</title>
+<meta name="description" content="Tamper-evident fingerprints for screenshots of online abuse. Free, works offline, and your images never leave your phone.">
+<meta name="theme-color" content="#f7f3ec" media="(prefers-color-scheme: light)">
+<meta name="theme-color" content="#12151c" media="(prefers-color-scheme: dark)">
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="icon.svg">
+<style>
+  :root {
+    --bg: #f7f3ec; --bg2: #efe8dc; --card: #ffffff; --ink: #1d2433; --muted: #5d6473;
+    --line: #e2d9ca; --accent: #0f766e; --accent-ink: #ffffff; --accent-soft: #d5ece8;
+    --warm: #c2562f; --ok: #15803d; --ok-soft: #dcf2e3; --bad: #b42318; --bad-soft: #fbe3e0;
+    --shadow: 0 1px 2px rgba(29,36,51,.06), 0 8px 24px rgba(29,36,51,.08);
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    --mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #12151c; --bg2: #171b24; --card: #1d222d; --ink: #ecebe7; --muted: #a3a8b3;
+      --line: #2c3240; --accent: #2dd4bf; --accent-ink: #0b1f1d; --accent-soft: #123a37;
+      --warm: #f0906a; --ok: #4ade80; --ok-soft: #12301f; --bad: #f87171; --bad-soft: #3a1717;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 8px 24px rgba(0,0,0,.3);
+    }
+  }
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 17px/1.6 var(--sans); }
+  a { color: var(--accent); }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+  h1, h2, h3 { font-family: var(--serif); font-weight: 700; line-height: 1.15; margin: 0; }
+  .eyebrow { font-size: .8rem; letter-spacing: .12em; text-transform: uppercase; color: var(--warm); font-weight: 700; }
+
+  /* nav */
+  nav { position: sticky; top: 0; z-index: 10; background: color-mix(in srgb, var(--bg) 88%, transparent); backdrop-filter: blur(10px); border-bottom: 1px solid var(--line); }
+  nav .wrap { display: flex; align-items: center; gap: 20px; height: 60px; }
+  .logo { display: flex; align-items: center; gap: 10px; font-family: var(--serif); font-weight: 700; font-size: 1.2rem; color: var(--ink); text-decoration: none; }
+  .logo img { width: 30px; height: 30px; }
+  .links { display: flex; gap: 22px; margin-left: auto; }
+  .links a { color: var(--muted); text-decoration: none; font-size: .95rem; }
+  .links a:hover { color: var(--ink); }
+  .exit { background: var(--warm); color: #fff; border: 0; border-radius: 99px; padding: 7px 14px; font: 600 .85rem var(--sans); cursor: pointer; }
+  @media (max-width: 760px) { .links { display: none; } .exit { margin-left: auto; } }
+
+  /* hero */
+  .hero { padding: 72px 0 64px; }
+  .hero .wrap { display: grid; grid-template-columns: 1.1fr .9fr; gap: 48px; align-items: center; }
+  .hero h1 { font-size: clamp(2.3rem, 5.5vw, 3.6rem); margin: 14px 0 18px; }
+  .hero h1 em { color: var(--accent); font-style: italic; }
+  .hero p { color: var(--muted); font-size: 1.15rem; margin: 0 0 28px; max-width: 34ch; }
+  .cta { display: flex; gap: 12px; flex-wrap: wrap; }
+  .btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 12px 20px; border-radius: 10px; font: 600 1rem var(--sans); text-decoration: none; cursor: pointer; border: 1px solid var(--line); background: var(--card); color: var(--ink); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: var(--accent-ink); }
+  .btn.small { padding: 8px 12px; font-size: .9rem; border-radius: 8px; }
+  .btn.danger { color: var(--bad); }
+  .btn:disabled { opacity: .5; cursor: not-allowed; }
+  .trust { display: flex; gap: 18px; flex-wrap: wrap; margin-top: 26px; color: var(--muted); font-size: .9rem; }
+  .trust span::before { content: "✓ "; color: var(--ok); font-weight: 700; }
+  @media (max-width: 860px) { .hero .wrap { grid-template-columns: 1fr; } .hero { padding: 44px 0; } }
+
+  .demo { position: relative; background: var(--card); border: 1px solid var(--line); border-radius: 16px; padding: 22px; box-shadow: var(--shadow); transform: rotate(1.2deg); }
+  .demo .top { display: flex; justify-content: space-between; align-items: center; font-size: .8rem; color: var(--muted); letter-spacing: .08em; text-transform: uppercase; font-weight: 700; }
+  .demo .shot { margin: 16px 0; height: 120px; border-radius: 10px; background: repeating-linear-gradient(135deg, var(--bg2) 0 12px, var(--bg) 12px 24px); display: grid; place-items: center; color: var(--muted); font-size: .9rem; }
+  .demo dl { margin: 0; display: grid; grid-template-columns: auto 1fr; gap: 6px 14px; font-size: .9rem; }
+  .demo dt { color: var(--muted); }
+  .demo dd { margin: 0; }
+  .stamp { position: absolute; right: -10px; bottom: -14px; transform: rotate(-8deg); border: 3px solid var(--ok); color: var(--ok); background: var(--card); font-weight: 800; letter-spacing: .1em; padding: 6px 12px; border-radius: 8px; font-size: .85rem; }
+  .hash { font-family: var(--mono); font-size: .82rem; word-break: break-all; }
+
+  /* sections */
+  section.block { padding: 72px 0; }
+  section.alt { background: var(--bg2); border-block: 1px solid var(--line); }
+  .head { max-width: 640px; margin-bottom: 36px; }
+  .head h2 { font-size: clamp(1.8rem, 3.6vw, 2.4rem); margin: 10px 0 12px; }
+  .head p { color: var(--muted); margin: 0; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 20px; counter-reset: s; }
+  .step { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+  .step::before { counter-increment: s; content: counter(s); display: grid; place-items: center; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); font-weight: 800; margin-bottom: 14px; }
+  .step h3 { font-size: 1.25rem; margin-bottom: 8px; }
+  .step p { margin: 0; color: var(--muted); }
+  @media (max-width: 760px) { .steps { grid-template-columns: 1fr; } }
+
+  /* tool */
+  .tool { background: var(--card); border: 1px solid var(--line); border-radius: 18px; box-shadow: var(--shadow); overflow: hidden; }
+  .tabs { display: flex; border-bottom: 1px solid var(--line); background: var(--bg2); }
+  .tab { flex: 1; padding: 16px 10px; border: 0; background: none; font: 600 1rem var(--sans); color: var(--muted); cursor: pointer; border-bottom: 3px solid transparent; }
+  .tab[aria-selected=true] { color: var(--ink); border-bottom-color: var(--accent); background: var(--card); }
+  .count { display: inline-block; min-width: 22px; padding: 0 6px; margin-left: 4px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: .8rem; }
+  .panel { padding: 28px; }
+  .panel[hidden] { display: none; }
+  @media (max-width: 560px) { .panel { padding: 18px; } .tab { font-size: .9rem; } }
+  .drop { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 34px 16px; border: 2px dashed var(--line); border-radius: 14px; text-align: center; cursor: pointer; transition: .15s; }
+  .drop:hover, .drop.over { border-color: var(--accent); background: var(--accent-soft); }
+  .drop strong { color: var(--accent); font-size: 1.05rem; }
+  .drop small { color: var(--muted); }
+  .drop input { display: none; }
+  .thumbs { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 14px; }
+  .thumbs img { width: 72px; height: 72px; object-fit: cover; border-radius: 8px; border: 1px solid var(--line); }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-top: 20px; }
+  @media (max-width: 560px) { .fields { grid-template-columns: 1fr; } }
+  label { display: block; font-size: .9rem; font-weight: 600; margin-bottom: 6px; }
+  input[type=url], textarea { width: 100%; padding: 11px 12px; border-radius: 10px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font: inherit; font-size: 1rem; }
+  textarea { min-height: 76px; resize: vertical; }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 20px; align-items: center; }
+  .hint { color: var(--muted); font-size: .88rem; }
+
+  .receipt { border: 1px solid var(--line); border-radius: 12px; padding: 18px; margin-top: 16px; background: var(--bg); }
+  .receipt.new { border-color: var(--ok); }
+  .receipt .title { display: flex; justify-content: space-between; gap: 10px; align-items: baseline; flex-wrap: wrap; margin-bottom: 10px; }
+  .receipt .title strong { word-break: break-all; }
+  .pill { font-size: .75rem; font-weight: 700; padding: 2px 10px; border-radius: 99px; background: var(--ok-soft); color: var(--ok); }
+  .receipt dl { display: grid; grid-template-columns: max-content 1fr; gap: 4px 14px; margin: 0; font-size: .92rem; }
+  .receipt dt { color: var(--muted); }
+  .receipt dd { margin: 0; word-break: break-word; }
+  .receipt .actions { margin-top: 14px; }
+  .result { display: flex; gap: 12px; align-items: flex-start; padding: 16px; border-radius: 12px; margin-top: 18px; font-weight: 600; }
+  .result.ok { background: var(--ok-soft); color: var(--ok); }
+  .result.bad { background: var(--bad-soft); color: var(--bad); }
+  .result .icon { font-size: 1.4rem; line-height: 1; }
+  .result p { margin: 2px 0 0; font-weight: 400; color: var(--ink); }
+  .empty { text-align: center; color: var(--muted); padding: 30px 0; }
+  .toolbar { display: flex; gap: 10px; flex-wrap: wrap; justify-content: space-between; align-items: center; }
+
+  /* privacy */
+  .two { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  @media (max-width: 760px) { .two { grid-template-columns: 1fr; } }
+  .box { background: var(--card); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+  .box h3 { font-size: 1.2rem; margin-bottom: 12px; }
+  .box ul { margin: 0; padding-left: 20px; color: var(--muted); }
+  .box li { margin: 6px 0; }
+  .box.stays h3 { color: var(--ok); }
+  .box.saved h3 { color: var(--accent); }
+
+  /* faq */
+  details { background: var(--card); border: 1px solid var(--line); border-radius: 12px; padding: 4px 20px; margin-bottom: 10px; }
+  summary { cursor: pointer; font-weight: 600; padding: 14px 0; list-style: none; display: flex; justify-content: space-between; gap: 12px; }
+  summary::-webkit-details-marker { display: none; }
+  summary::after { content: "+"; color: var(--accent); font-size: 1.3rem; line-height: 1; }
+  details[open] summary::after { content: "−"; }
+  details p { color: var(--muted); margin: 0 0 16px; }
+
+  .help { background: var(--ink); color: var(--bg); border-radius: 18px; padding: 32px; display: grid; grid-template-columns: 1.3fr 1fr; gap: 24px; align-items: center; }
+  .help h2 { font-size: 1.7rem; margin-bottom: 8px; }
+  .help p { margin: 0; opacity: .8; }
+  .help .num { font-family: var(--serif); font-size: 1.6rem; font-weight: 700; }
+  .help a { color: inherit; }
+  @media (max-width: 760px) { .help { grid-template-columns: 1fr; padding: 24px; } }
+
+  footer { padding: 40px 0 56px; color: var(--muted); font-size: .9rem; }
+  footer .wrap { display: flex; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+
+  .toast { position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%) translateY(20px); background: var(--ink); color: var(--bg); padding: 10px 18px; border-radius: 99px; font-size: .9rem; opacity: 0; transition: .2s; pointer-events: none; z-index: 20; }
+  .toast.show { opacity: 1; transform: translateX(-50%); }
+
+  #print { display: none; }
+  @media print {
+    body > *:not(#print) { display: none !important; }
+    #print { display: block; color: #000; font: 14px/1.6 var(--sans); }
+    #print h1 { font-size: 22px; margin-bottom: 4px; }
+    #print table { border-collapse: collapse; width: 100%; margin-top: 16px; }
+    #print td { border: 1px solid #999; padding: 8px; vertical-align: top; }
+    #print td:first-child { width: 150px; font-weight: 600; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="wrap">
+    <a class="logo" href="#top"><img src="icon.svg" alt="">Proof Kit</a>
+    <div class="links">
+      <a href="#how">How it works</a>
+      <a href="#tool">Make a proof</a>
+      <a href="#privacy">Privacy</a>
+      <a href="#faq">FAQ</a>
+    </div>
+    <button class="exit" id="exit" title="Leave this site quickly">Quick exit</button>
+  </div>
+</nav>
+
+<header class="hero" id="top">
+  <div class="wrap">
+    <div>
+      <span class="eyebrow">Free · Offline · Private</span>
+      <h1>Proof that <em>can't be quietly edited.</em></h1>
+      <p>Turn screenshots of online abuse into tamper-evident records you can take to a complaint. Your images never leave your phone.</p>
+      <div class="cta">
+        <a class="btn primary" href="#tool">Make a proof →</a>
+        <a class="btn" href="#how">How it works</a>
+      </div>
+      <div class="trust">
+        <span>No account</span>
+        <span>No uploads</span>
+        <span id="offlineNote">Works without internet</span>
+      </div>
+    </div>
+    <div class="demo" aria-hidden="true">
+      <div class="top"><span>Proof record</span><span>SHA-256</span></div>
+      <div class="shot">screenshot_0412.png</div>
+      <dl>
+        <dt>Recorded</dt><dd>12 Oct 2026, 9:41 PM</dd>
+        <dt>Where</dt><dd>instagram.com/…</dd>
+        <dt>Fingerprint</dt><dd class="hash">9f2c4e1a7b…d83a05c6</dd>
+      </dl>
+      <div class="stamp">UNCHANGED ✓</div>
+    </div>
+  </div>
+</header>
+
+<section class="block alt" id="how">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">How it works</span>
+      <h2>Three steps, under a minute</h2>
+      <p>A fingerprint is a unique code made from every pixel of your screenshot. If anyone changes even one pixel, the code changes completely.</p>
+    </div>
+    <div class="steps">
+      <div class="step"><h3>Take a screenshot</h3><p>Capture the message, comment or post as soon as you see it, before it can be deleted.</p></div>
+      <div class="step"><h3>Fingerprint it here</h3><p>Proof Kit records the date and time and creates a SHA-256 fingerprint, right on your phone.</p></div>
+      <div class="step"><h3>Keep and check</h3><p>Save the record. Later, anyone can check that your screenshot is exactly the one you recorded.</p></div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="tool">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">The tool</span>
+      <h2>Make a proof</h2>
+      <p>Everything below runs inside this page. Nothing is sent anywhere.</p>
+    </div>
+
+    <div class="tool">
+      <div class="tabs" role="tablist">
+        <button class="tab" role="tab" aria-selected="true" data-tab="record">Record</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="check">Check a file</button>
+        <button class="tab" role="tab" aria-selected="false" data-tab="records">My records <span class="count" id="count">0</span></button>
+      </div>
+
+      <div class="panel" id="panel-record">
+        <label class="drop" id="drop">
+          <strong>Choose screenshots</strong>
+          <small>or drag them here · PNG, JPG, HEIC</small>
+          <input type="file" id="pick" accept="image/*" multiple>
+        </label>
+        <div class="thumbs" id="thumbs"></div>
+        <div class="fields">
+          <div>
+            <label for="link">Where did it happen? <span class="hint">(optional)</span></label>
+            <input type="url" id="link" placeholder="Link to the post or profile">
+          </div>
+          <div>
+            <label for="note">Note <span class="hint">(optional)</span></label>
+            <textarea id="note" rows="2"placeholder="e.g. 3rd threatening message this week"></textarea>
+          </div>
+        </div>
+        <div class="actions">
+          <button class="btn primary" id="record" disabled>Create fingerprint</button>
+          <span class="hint" id="pickHint">No screenshot chosen yet</span>
+        </div>
+        <div id="receipts"></div>
+      </div>
+
+      <div class="panel" id="panel-check" hidden>
+        <p class="hint" style="margin-top:0">Choose a screenshot to see if it is exactly the same file you recorded on this phone.</p>
+        <label class="drop" id="drop2">
+          <strong>Choose file to check</strong>
+          <small>or drag it here</small>
+          <input type="file" id="check" accept="image/*">
+        </label>
+        <div id="checkResult"></div>
+      </div>
+
+      <div class="panel" id="panel-records" hidden>
+        <div class="toolbar">
+          <span class="hint">Saved only in this browser. Export a backup regularly.</span>
+          <div class="actions" style="margin:0">
+            <button class="btn small" id="csv">Export CSV</button>
+            <button class="btn small" id="json">Export JSON</button>
+            <button class="btn small danger" id="clear">Delete all</button>
+          </div>
+        </div>
+        <div id="log"></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block alt" id="privacy">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Privacy</span>
+      <h2>Your screenshots stay yours</h2>
+      <p>Proof Kit has no server and no database. There is nothing for anyone to hack, leak or read.</p>
+    </div>
+    <div class="two">
+      <div class="box stays">
+        <h3>Stays on your phone</h3>
+        <ul>
+          <li>Your screenshots: never uploaded, never copied</li>
+          <li>Your records: saved only in this browser</li>
+          <li>Your notes and links</li>
+        </ul>
+      </div>
+      <div class="box saved">
+        <h3>What a record contains</h3>
+        <ul>
+          <li>The SHA-256 fingerprint</li>
+          <li>File name and size</li>
+          <li>Date, time and time zone</li>
+          <li>Your optional link and note</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</section>
+
+<section class="block" id="faq">
+  <div class="wrap">
+    <div class="head">
+      <span class="eyebrow">Questions</span>
+      <h2>Good to know</h2>
+    </div>
+    <details>
+      <summary>What is a SHA-256 fingerprint?</summary>
+      <p>It is a 64-character code calculated from every byte of a file. The same file always gives the same code. A file that has been edited, cropped or re-saved gives a completely different one. It is the same method banks and software companies use to check files have not been tampered with.</p>
+    </details>
+    <details>
+      <summary>Do I need internet?</summary>
+      <p>Only the first time you open the site. After that, add it to your home screen and it works with no connection at all.</p>
+    </details>
+    <details>
+      <summary>Can someone see my screenshots?</summary>
+      <p>No. The fingerprint is calculated inside your phone's browser. The image is never sent anywhere, and a fingerprint cannot be turned back into the image.</p>
+    </details>
+    <details>
+      <summary>Is this accepted as legal evidence?</summary>
+      <p>Proof Kit helps you show that a screenshot has not been changed since you recorded it, and keeps your evidence organised. It is not a legal certification, and the time comes from your phone's clock. Always keep the original screenshots, and ask the authority you complain to what they need.</p>
+    </details>
+    <details>
+      <summary>What if I clear my browser or change phones?</summary>
+      <p>Your records would be deleted with the browser data. Use "Export CSV" or "Export JSON" in My records to keep a backup somewhere safe, such as with a trusted person.</p>
+    </details>
+    <details>
+      <summary>What does the Quick exit button do?</summary>
+      <p>It immediately replaces this page with a neutral website, in case someone is looking over your shoulder.</p>
+    </details>
+
+    <div class="help" style="margin-top:40px">
+      <div>
+        <h2>You don't have to handle this alone</h2>
+        <p>If you are being harassed online, you can speak to someone confidentially.</p>
+      </div>
+      <div>
+        <div class="hint" style="color:inherit;opacity:.7">Digital Rights Foundation · Cyber Harassment Helpline</div>
+        <div class="num"><a href="tel:080039393">0800-39393</a></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<footer>
+  <div class="wrap">
+    <span>Proof Kit · free and open source</span>
+    <span><a href="https://github.com/haniarizwan09022008-boop/proof-kit">View the code on GitHub</a></span>
+  </div>
+</footer>
+
+<div class="toast" id="toast"></div>
+<div id="print"></div>
+
+<script>
+const KEY = 'proofkit.records.v1';
+const $ = id => document.getElementById(id);
+
+function load() {
+  try { return JSON.parse(localStorage.getItem(KEY)) || []; } catch { return []; }
+}
+function save(records) {
+  try { localStorage.setItem(KEY, JSON.stringify(records)); return true; }
+  catch { alert('Could not save. Export your records now so they are not lost.'); return false; }
+}
+
+function toast(msg) {
+  const t = $('toast');
+  t.textContent = msg;
+  t.classList.add('show');
+  clearTimeout(t._h);
+  t._h = setTimeout(() => t.classList.remove('show'), 2200);
+}
+
+async function sha256(file) {
+  const digest = await crypto.subtle.digest('SHA-256', await file.arrayBuffer());
+  return [...new Uint8Array(digest)].map(b => b.toString(16).padStart(2, '0')).join('');
+}
+
+function esc(s) {
+  return String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+}
+
+function fields(r) {
+  return [
+    ['File', r.fileName],
+    ['Size', r.size.toLocaleString() + ' bytes'],
+    ['Recorded', r.recordedLocal + ' (' + r.timeZone + ')'],
+    ['Recorded (UTC)', r.recordedUTC],
+    ['Link', r.link],
+    ['Note', r.note],
+    ['SHA-256', r.sha256]
+  ].filter(([, v]) => v);
+}
+
+function receiptText(r) {
+  return 'PROOF KIT RECORD\n' + fields(r).map(([k, v]) => k + ': ' + v).join('\n');
+}
+
+function card(r, isNew) {
+  return `
+    <div class="receipt${isNew ? ' new' : ''}">
+      <div class="title"><strong>${esc(r.fileName)}</strong>${isNew ? '<span class="pill">Recorded ✓</span>' : ''}</div>
+      <dl>
+        <dt>Recorded</dt><dd>${esc(r.recordedLocal)} <span class="hint">${esc(r.timeZone)}</span></dd>
+        ${r.link ? `<dt>Link</dt><dd>${esc(r.link)}</dd>` : ''}
+        ${r.note ? `<dt>Note</dt><dd>${esc(r.note)}</dd>` : ''}
+        <dt>Fingerprint</dt><dd class="hash">${r.sha256}</dd>
+      </dl>
+      <div class="actions">
+        <button class="btn small" data-act="copy" data-id="${r.id}">Copy</button>
+        <button class="btn small" data-act="txt" data-id="${r.id}">Download</button>
+        <button class="btn small" data-act="print" data-id="${r.id}">Print / PDF</button>
+        ${isNew ? '' : `<button class="btn small danger" data-act="del" data-id="${r.id}">Delete</button>`}
+      </div>
+    </div>`;
+}
+
+function renderLog() {
+  const records = load();
+  $('count').textContent = records.length;
+  $('log').innerHTML = records.length
+    ? records.slice().reverse().map(r => card(r, false)).join('')
+    : '<div class="empty">No records yet. Make your first proof in the Record tab.</div>';
+}
+
+// tabs
+function showTab(name) {
+  document.querySelectorAll('.tab').forEach(t => t.setAttribute('aria-selected', t.dataset.tab === name));
+  ['record', 'check', 'records'].forEach(n => $('panel-' + n).hidden = n !== name);
+}
+document.querySelectorAll('.tab').forEach(t => t.addEventListener('click', () => showTab(t.dataset.tab)));
+
+// drag and drop
+function dropZone(zone, input) {
+  zone.addEventListener('dragover', e => { e.preventDefault(); zone.classList.add('over'); });
+  zone.addEventListener('dragleave', () => zone.classList.remove('over'));
+  zone.addEventListener('drop', e => {
+    e.preventDefault();
+    zone.classList.remove('over');
+    input.files = e.dataTransfer.files;
+    input.dispatchEvent(new Event('change'));
+  });
+}
+dropZone($('drop'), $('pick'));
+dropZone($('drop2'), $('check'));
+
+// previews are made from the local file and never leave the page
+$('pick').addEventListener('change', () => {
+  const files = [...$('pick').files];
+  $('thumbs').querySelectorAll('img').forEach(i => URL.revokeObjectURL(i.src));
+  $('thumbs').innerHTML = '';
+  for (const f of files) {
+    const img = document.createElement('img');
+    img.src = URL.createObjectURL(f);
+    img.alt = f.name;
+    $('thumbs').appendChild(img);
+  }
+  $('record').disabled = !files.length;
+  $('pickHint').textContent = files.length
+    ? files.length + (files.length === 1 ? ' screenshot ready' : ' screenshots ready')
+    : 'No screenshot chosen yet';
+});
+
+$('record').addEventListener('click', async () => {
+  const files = [...$('pick').files];
+  if (!files.length) return;
+  const records = load();
+  const made = [];
+  for (const file of files) {
+    const now = new Date();
+    const r = {
+      id: crypto.randomUUID ? crypto.randomUUID() : String(now.getTime()) + Math.random(),
+      fileName: file.name,
+      size: file.size,
+      type: file.type,
+      sha256: await sha256(file),
+      recordedUTC: now.toISOString(),
+      recordedLocal: now.toLocaleString(),
+      timeZone: Intl.DateTimeFormat().resolvedOptions().timeZone,
+      link: $('link').value.trim(),
+      note: $('note').value.trim()
+    };
+    records.push(r);
+    made.push(r);
+  }
+  if (!save(records)) return;
+  $('receipts').innerHTML = made.map(r => card(r, true)).join('');
+  $('pick').value = '';
+  $('pick').dispatchEvent(new Event('change'));
+  $('link').value = '';
+  $('note').value = '';
+  renderLog();
+  toast(made.length === 1 ? 'Proof saved' : made.length + ' proofs saved');
+});
+
+$('check').addEventListener('change', async e => {
+  const file = e.target.files[0];
+  if (!file) return;
+  const hash = await sha256(file);
+  const match = load().find(r => r.sha256 === hash);
+  $('checkResult').innerHTML = (match
+    ? `<div class="result ok"><span class="icon">✓</span><div>Match: this file is unchanged.<p>It is identical to the screenshot recorded on ${esc(match.recordedLocal)}.</p></div></div>`
+    : `<div class="result bad"><span class="icon">✕</span><div>No match.<p>This file was never recorded on this phone, or it has been changed since.</p></div></div>`)
+    + `<div class="receipt"><dl><dt>File</dt><dd>${esc(file.name)}</dd><dt>Fingerprint</dt><dd class="hash">${hash}</dd></dl></div>`;
+  e.target.value = '';
+});
+
+function download(name, text, type) {
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(new Blob([text], { type }));
+  a.download = name;
+  a.click();
+  setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+}
+const stamp = () => new Date().toISOString().slice(0, 10);
+
+document.addEventListener('click', async e => {
+  const btn = e.target.closest('[data-act]');
+  if (!btn) return;
+  const r = load().find(x => x.id === btn.dataset.id);
+  if (!r) return;
+  if (btn.dataset.act === 'copy') {
+    try { await navigator.clipboard.writeText(receiptText(r)); toast('Record copied'); }
+    catch { prompt('Copy this record:', receiptText(r)); }
+  }
+  if (btn.dataset.act === 'txt') {
+    download(`proof-${r.sha256.slice(0, 8)}.txt`, receiptText(r), 'text/plain');
+  }
+  if (btn.dataset.act === 'print') {
+    $('print').innerHTML = `<h1>Proof Kit record</h1><div>Tamper-evident fingerprint of a screenshot</div>
+      <table>${fields(r).map(([k, v]) => `<tr><td>${k}</td><td>${esc(v)}</td></tr>`).join('')}</table>
+      <p style="margin-top:16px;font-size:12px">To verify: compute the SHA-256 of the original file. If it matches the fingerprint above, the file has not been changed since it was recorded. Time is taken from the recording device's clock.</p>`;
+    window.print();
+  }
+  if (btn.dataset.act === 'del' && confirm('Delete this record? This cannot be undone.')) {
+    save(load().filter(x => x.id !== r.id));
+    renderLog();
+  }
+});
+
+$('json').addEventListener('click', () =>
+  download(`proof-kit-${stamp()}.json`, JSON.stringify(load(), null, 2), 'application/json'));
+
+$('csv').addEventListener('click', () => {
+  const cols = ['fileName', 'size', 'sha256', 'recordedUTC', 'recordedLocal', 'timeZone', 'link', 'note'];
+  const q = v => '"' + String(v ?? '').replace(/"/g, '""') + '"';
+  const rows = [cols.join(',')].concat(load().map(r => cols.map(c => q(r[c])).join(',')));
+  download(`proof-kit-${stamp()}.csv`, rows.join('\n'), 'text/csv');
+});
+
+$('clear').addEventListener('click', () => {
+  if (confirm('Delete ALL records? Export first if you need them.')) { save([]); renderLog(); }
+});
+
+$('exit').addEventListener('click', () => location.replace('https://www.google.com/search?q=weather'));
+
+if (!window.crypto || !crypto.subtle) {
+  $('record').title = 'Open this site over https to create fingerprints';
+  toast('Open this site over https to create fingerprints');
+}
+if ('serviceWorker' in navigator && location.protocol === 'https:') {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+
+renderLog();
+</script>
+</body>
+</html>
